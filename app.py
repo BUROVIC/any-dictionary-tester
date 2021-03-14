@@ -49,21 +49,20 @@ class AnyDictionaryTester(QWidget):
         except StopIteration:
             self.close()
 
-    def __init__(self, dictionary: dict):
-        super().__init__()
+    @staticmethod
+    def get_translation_swap_flag():
+        ask_message_box = QMessageBox(
+            QMessageBox.Question,
+            'Configuration',
+            'Swap words with their translations?',
+            QMessageBox.Yes | QMessageBox.No
+        )
+        ask_message_box.exec_()
+        ask_message_box.deleteLater()
+        return ask_message_box.result() == ask_message_box.Yes
 
-        self.dictionary = dictionary
-
-        self.setFocus()
-        self.setMinimumWidth(300)
-        self.setWindowTitle('Any Dictionary Tester')
-        self.setFont(QFont('Arial', 14))
-
-        self.setLayout(self.grid)
-
-        words = list(dictionary.keys())
-        random.shuffle(words)
-
+    @staticmethod
+    def get_hard_mode_flag():
         ask_message_box = QMessageBox(
             QMessageBox.Question,
             'Configuration',
@@ -72,18 +71,40 @@ class AnyDictionaryTester(QWidget):
         )
         ask_message_box.exec_()
         ask_message_box.deleteLater()
-        self.is_hard_mode = ask_message_box.result() == ask_message_box.Yes
+        return ask_message_box.result() == ask_message_box.Yes
+
+    @staticmethod
+    def get_hard_mode_with_autocomplete_flag():
+        ask_message_box = QMessageBox(
+            QMessageBox.Question,
+            'Configuration',
+            'Use autocomplete?',
+            QMessageBox.Yes | QMessageBox.No
+        )
+        ask_message_box.exec_()
+        ask_message_box.deleteLater()
+        return ask_message_box.result() == ask_message_box.Yes
+
+    def __init__(self, dictionary: dict):
+        super().__init__()
+
+        self.setFocus()
+        self.setMinimumWidth(300)
+        self.setWindowTitle('Any Dictionary Tester')
+        self.setFont(QFont('Arial', 14))
+
+        self.setLayout(self.grid)
+
+        self.dictionary = dict((value, key) for key, value in dictionary.items()) if self.get_translation_swap_flag() \
+            else dictionary
+
+        words = list(self.dictionary.keys())
+        random.shuffle(words)
+
+        self.is_hard_mode = self.get_hard_mode_flag()
 
         if self.is_hard_mode:
-            ask_message_box = QMessageBox(
-                QMessageBox.Question,
-                'Configuration',
-                'Use autocomplete?',
-                QMessageBox.Yes | QMessageBox.No
-            )
-            ask_message_box.exec_()
-            ask_message_box.deleteLater()
-            self.is_hard_mode_with_autocomplete = ask_message_box.result() == ask_message_box.Yes
+            self.is_hard_mode_with_autocomplete = self.get_hard_mode_with_autocomplete_flag()
 
         for word in words:
             dialog = QDialog()
@@ -91,11 +112,11 @@ class AnyDictionaryTester(QWidget):
             dialog_grid = QGridLayout()
             dialog.setLayout(dialog_grid)
 
-            values = list(np.random.choice(list(dictionary.values()), 4, replace=False))
+            values = list(np.random.choice(list(self.dictionary.values()), 4, replace=False))
 
-            if dictionary[word] not in values:
+            if self.dictionary[word] not in values:
                 values.remove(values[0])
-                values.append(dictionary[word])
+                values.append(self.dictionary[word])
                 random.shuffle(values)
 
             original_word_label = QLabel(word)
@@ -119,7 +140,7 @@ class AnyDictionaryTester(QWidget):
                 answer_combo_box = QComboBox()
 
                 answer_combo_box.setEditable(True)
-                answer_combo_box.addItems(sample(list(dictionary.values()), len(dictionary.values())))
+                answer_combo_box.addItems(sample(list(self.dictionary.values()), len(self.dictionary.values())))
                 answer_combo_box.setCurrentText('')
                 answer_combo_box.lineEdit().returnPressed.connect(
                     lambda associated_word=word, associated_combo_box=answer_combo_box:
