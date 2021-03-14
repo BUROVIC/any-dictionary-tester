@@ -4,6 +4,7 @@ from functools import partial
 
 import pandas as pandas
 import numpy as np
+from random import sample
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QPushButton, QApplication, QLabel, QGridLayout, QDialog, QMessageBox, QLineEdit, \
@@ -118,7 +119,7 @@ class AnyDictionaryTester(QWidget):
                 answer_combo_box = QComboBox()
 
                 answer_combo_box.setEditable(True)
-                answer_combo_box.addItems(dictionary.values())
+                answer_combo_box.addItems(sample(list(dictionary.values()), len(dictionary.values())))
                 answer_combo_box.setCurrentText('')
                 answer_combo_box.lineEdit().returnPressed.connect(
                     lambda associated_word=word, associated_combo_box=answer_combo_box:
